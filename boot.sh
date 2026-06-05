@@ -1,15 +1,21 @@
 #!/bin/sh
 
 
-TELEGRAM_BOT_TOKEN="${TELEGRAM_BOT_TOKEN:-00000000:xxxxxxxxxxxxxxxxxxxxxxxxxxxx}"
-TELEGRAM_CHAT_ID="${TELEGRAM_CHAT_ID:xxxxxxxxxxx}"
+# Discord Bot Token (プラグインが Discord に接続するために使用)
+DISCORD_BOT_TOKEN="${DISCORD_BOT_TOKEN:-MTIzxxxxxxxxxxxxxxxxxxxxx.xxxxxx.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx}"
 
-notify_telegram() {
+# Discord Webhook URL (起動・再起動の通知をチャンネルにプッシュするために使用)
+DISCORD_WEBHOOK_URL="${DISCORD_WEBHOOK_URL:-https://discord.com/api/webhooks/000000000000000000/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx}"
+
+# プラグイン (MCP サーバ) が参照する環境変数として export
+export DISCORD_BOT_TOKEN
+
+notify_discord() {
   text="$1"
-  if [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ]; then
-    curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-      -d "chat_id=${TELEGRAM_CHAT_ID}" \
-      --data-urlencode "text=${text}" \
+  if [ -n "$DISCORD_WEBHOOK_URL" ]; then
+    curl -s -X POST "$DISCORD_WEBHOOK_URL" \
+      -H "Content-Type: application/json" \
+      -d "{\"content\":\"${text}\"}" \
       > /dev/null 2>&1 || true
   fi
 }
@@ -17,14 +23,13 @@ notify_telegram() {
 FIRST=1
 while true; do
   if [ "$FIRST" = "1" ]; then
-    notify_telegram "🦐 boot.sh起動: ナルエビ三世を起動します🌅"
+    notify_discord "🦐 boot.sh起動: ナルエビ三世を起動します🌅"
     FIRST=0
   else
-    notify_telegram "🦐 ナルエビ三世が終了 → 5秒後に再起動します🔄"
+    notify_discord "🦐 ナルエビ三世が終了 → 5秒後に再起動します🔄"
     sleep 5
-    notify_telegram "🦐 ナルエビ三世を再起動します🌅"
+    notify_discord "🦐 ナルエビ三世を再起動します🌅"
   fi
-  claude --dangerously-skip-permissions --channels plugin:telegram@claude-plugins-official -c
+  claude --dangerously-skip-permissions --channels plugin:discord@claude-plugins-official -c
   echo "ナルエビ三世が終了しました。5秒後に再起動します..."
 done
-
